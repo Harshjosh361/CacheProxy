@@ -25,7 +25,14 @@ type CacheItem struct {
 func main() {
 	port := flag.Int("port", 6000, "Port on which the proxy server will run")
 	origin := flag.String("origin", "", "The origin server to forward requests to")
+	clearCache := flag.Bool("clear-cache", false, "Clear the cache and exit")
+
 	flag.Parse()
+
+	if *clearCache {
+		ClearCache()
+		return
+	}
 
 	if *origin == "" {
 		log.Fatal("Origin not specified")
@@ -40,6 +47,12 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
 
+func ClearCache() {
+	cacheMutex.Lock()
+	cache = make(map[string]CacheItem)
+	cacheMutex.Unlock()
+	fmt.Println("Cache cleared")
+}
 func HandleRequest(w http.ResponseWriter, r *http.Request, origin string) {
 	originURL := fmt.Sprintf("%s%s", origin, r.URL.Path)
 
